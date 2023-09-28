@@ -24,7 +24,7 @@ def get_CERN_timestamp(df_dict,index):
 
 def plot_WIBEth_by_channel(df_dict,var,det_name,run=None,trigger=None,seq=None,yrange=None,jpeg_base=None):
     
-    df_tmp, index = dfc.SelectRecord(df_dict[f"detd_k{det_name}_kWIBEth"],run,trigger,seq)
+    df_tmp, index = dfc.select_record(df_dict[f"detd_k{det_name}_kWIBEth"],run,trigger,seq)
     df_tmp = df_tmp.reset_index()
     df_tmp["apa_plane_label"] = df_tmp[["apa","plane"]].apply(lambda x: f'{x.apa}, Plane {x.plane}',axis=1)
     
@@ -41,7 +41,7 @@ def plot_WIBEth_by_channel(df_dict,var,det_name,run=None,trigger=None,seq=None,y
 
 def plot_WIBEth_pulser_by_channel(df_dict,det_name,run=None,trigger=None,seq=None,jpeg_base=None):
     
-    df_tmp, index = dfc.SelectRecord(df_dict[f"detd_k{det_name}_kWIBEth"],run,trigger,seq)
+    df_tmp, index = dfc.select_record(df_dict[f"detd_k{det_name}_kWIBEth"],run,trigger,seq)
     df_tmp= df_tmp.reset_index()
     
     trigger_time = get_CERN_timestamp(df_dict,index);
