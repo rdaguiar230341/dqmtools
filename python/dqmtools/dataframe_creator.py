@@ -29,7 +29,7 @@ except:
 #def CreateDataFrame(dict,nrows,idx_list):
 #    return pd.DataFrame(dict,index=range(nrows)).set_index(idx_list)
 
-def GetFragmentUnpacker(frag_type,det_id):
+def get_fragment_unpacker(frag_type,det_id):
     
     if(frag_type==daqdataformats.FragmentType.kWIBEth and det_id==detdataformats.DetID.Subdetector.kHD_TPC.value):
         return rawdatautils.unpack.utils.WIBEthUnpacker("PD2HDChannelMap")
@@ -42,7 +42,7 @@ def GetFragmentUnpacker(frag_type,det_id):
     else:
         return None
     
-def ProcessSourceID(h5_file,sid,record_index):
+def process_source_id(h5_file,sid,record_index):
 
     sid_unpacker = rawdatautils.unpack.utils.SourceIDUnpacker(record_index)
     return_dict = sid_unpacker.get_all_data(sid)
@@ -59,7 +59,7 @@ def ProcessSourceID(h5_file,sid,record_index):
         det_id=frag.get_detector_id()
         type_string = f'{detdataformats.DetID.Subdetector(det_id).name}_{frag_type.name}'
 
-        fragment_unpacker = GetFragmentUnpacker(frag_type,det_id)
+        fragment_unpacker = get_fragment_unpacker(frag_type,det_id)
         if fragment_unpacker is None:
             print(f'Unknown fragment {type_string}. Source ID {sid}')
             return return_dict
@@ -68,13 +68,13 @@ def ProcessSourceID(h5_file,sid,record_index):
         
     return return_dict
 
-def ProcessRecord(h5_file,rid,df_dict,MAX_WORKERS=10):
+def process_record(h5_file,rid,df_dict,MAX_WORKERS=10):
 
     with h5py.File(h5_file.get_file_name(), 'r') as f:
         record_index = RecordDataBase(run=f.attrs["run_number"],trigger=rid[0],sequence=rid[1])
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_sid = {executor.submit(ProcessSourceID,h5_file,sid,record_index): sid for sid in h5_file.get_source_ids(rid)}
+        future_to_sid = {executor.submit(process_source_id,h5_file,sid,record_index): sid for sid in h5_file.get_source_ids(rid)}
         for future in concurrent.futures.as_completed(future_to_sid):
             sid = future_to_sid[future]
             res = future.result()
@@ -85,7 +85,7 @@ def ProcessRecord(h5_file,rid,df_dict,MAX_WORKERS=10):
 
     return df_dict
 
-def SelectRecord(df,run=None,trigger=None,sequence=None):
+def select_record(df,run=None,trigger=None,sequence=None):
     if (run is None) and (trigger is None) and (sequence is None):
         index = df.index[0][0:3]
     else:
@@ -104,7 +104,7 @@ def SelectRecord(df,run=None,trigger=None,sequence=None):
         raise
 
 
-def ConcatenateDataFrames(df_dict):
+def concatenate_dataframes(df_dict):
     for key, dc_list in df_dict.items():
         idx = dc_list[0].index_names()
         df_dict[key] = pd.DataFrame(dc_list)
