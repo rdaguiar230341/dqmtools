@@ -91,11 +91,11 @@ def main(filenames, nrecords, nworkers, hd, wibpulser, make_plots):
 
     if(make_plots):
         if(not wibpulser):
-            plot_WIBEth_by_channel(df_dict,var="adc_rms",det_name=tpc_det_name,jpeg_base="pdune2_{tpc_det_name}_rms")
-            plot_WIBEth_by_channel(df_dict,var="adc_rms",det_name=tpc_det_name,yrange=[-1,60],jpeg_base="pdune2_{tpc_det_name}_rms_fixrange")
-            plot_WIBEth_by_channel(df_dict,var="adc_mean",det_name=tpc_det_name,jpeg_base="pdune2_{tpc_det_name}_mean")
+            plot_WIBEth_by_channel(df_dict,var="adc_rms",det_name=tpc_det_name,jpeg_base=f"pdune2_{tpc_det_name}_rms")
+            plot_WIBEth_by_channel(df_dict,var="adc_rms",det_name=tpc_det_name,yrange=[-1,60],jpeg_base=f"pdune2_{tpc_det_name}_rms_fixrange")
+            plot_WIBEth_by_channel(df_dict,var="adc_mean",det_name=tpc_det_name,jpeg_base=f"pdune2_{tpc_det_name}_mean")
         if(wibpulser):
-            plot_WIBEth_pulser_by_channel(df_dict,det_name=tpc_det_name,jpeg_base='pdune2_{tpc_det_name}_pulser')
+            plot_WIBEth_pulser_by_channel(df_dict,det_name=tpc_det_name,jpeg_base=f'pdune2_{tpc_det_name}_pulser')
 
 if __name__ == '__main__':
     main()
