@@ -77,6 +77,7 @@ class DQMTestSuite:
     def do_all_tests(self,*args,**kwargs):
         new_results = []
         for name, test in self.tests.items():
+           #print(name, test)
            self.df_results = pd.concat([self.df_results,
                                         pd.Series(test.do_test(*args,**kwargs) | ({ "name": name })).to_frame().T],ignore_index=True)
 

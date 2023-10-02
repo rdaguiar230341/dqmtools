@@ -14,14 +14,14 @@ import click
 @click.option('--nrecords', '-n', default=1, help='How many Trigger Records to process (default: 1)')
 @click.option('--nworkers', default=10, help='How many thread workers to launch (default: 10)')
 @click.option('--hd/--vd', default=True, help='Whether we are running HD (or VD) (default: "HD")')
+@click.option('--pds',is_flag=True, help='If PDS was included and should be processed')
 @click.option('--wibpulser', is_flag=True, help='WIBs in pulser mode')
 @click.option('--make-plots',is_flag=True, help='Option to make plots')
 
-def main(filenames, nrecords, nworkers, hd, wibpulser, make_plots):
+def main(filenames, nrecords, nworkers, hd, pds, wibpulser, make_plots):
 
     #setup our tests
     dqm_test_suite = DQMTestSuite()
-
     dqm_test_suite.register_test(CheckAllExpectedFragmentsTest())
     dqm_test_suite.register_test(CheckNFrames_WIBEth())
     
@@ -63,6 +63,16 @@ def main(filenames, nrecords, nworkers, hd, wibpulser, make_plots):
         dqm_test_suite.register_test(CheckPedestal_WIBEth(det_name=tpc_det_name,verbose=True),
                                          name=f"CheckPedestal_{tpc_det_name}")
 
+    if pds:
+        """
+        Create separate test suite for DAPHNE and register all related tests
+        """
+        dqm_test_suite_daphne = DQMTestSuite()
+        dqm_test_suite_daphne.register_test(CheckTimestampsAligned(2),"CheckTimestampsAligned_PDS")
+        dqm_test_suite_daphne.register_test(CheckEmptyFragments_DAPHNE(), "CheckEmptyFragments_DAPHNE")
+        dqm_test_suite_daphne.register_test(CheckTimestampDiffs_DAPHNE())
+        dqm_test_suite_daphne.register_test(CheckADCData_DAPHNE())
+
     df_dict = {}
     n_processed_records = 0
     for filename in filenames:
@@ -85,9 +95,16 @@ def main(filenames, nrecords, nworkers, hd, wibpulser, make_plots):
     df_dict = dfc.concatenate_dataframes(df_dict)
 
     print(df_dict.keys())
-    
+
     dqm_test_suite.do_all_tests(df_dict)
     print(dqm_test_suite.get_table())
+
+    if pds:
+        print("\n\nDAPHNE test results:")
+        dqm_test_suite_daphne.do_all_tests(df_dict)
+        print(dqm_test_suite_daphne.get_table())
+
+    
 
     if(make_plots):
         if(not wibpulser):
@@ -96,6 +113,11 @@ def main(filenames, nrecords, nworkers, hd, wibpulser, make_plots):
             plot_WIBEth_by_channel(df_dict,var="adc_mean",det_name=tpc_det_name,jpeg_base=f"pdune2_{tpc_det_name}_mean")
         if(wibpulser):
             plot_WIBEth_pulser_by_channel(df_dict,det_name=tpc_det_name,jpeg_base=f'pdune2_{tpc_det_name}_pulser')
+
+        if (pds):
+            plot_DAPHNE_stats(df_dict,jpeg_base="pdune2_DAPHNE")
+            plot_DAPHNE_baseline(df_dict,jpeg_base="pdune2_DAPHNE")
+
 
 if __name__ == '__main__':
     main()
