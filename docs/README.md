@@ -20,4 +20,6 @@ Adding `--pds` will initialize checks related to the DAPHNE data and print resul
 ./dqm_analyzer.py --pds /data1/np04_hd_run022752_0000_dataflow0_datawriter_0_20230925T084543.hdf5.copied
 ```
 And to add plotting of some stats for the collected data:
+```
 ./dqm_analyzer.py --make-plots --pds /data1/np04_hd_run022752_0000_dataflow0_datawriter_0_20230925T084543.hdf5.copied
+```
