@@ -104,8 +104,6 @@ def main(filenames, nrecords, nworkers, hd, pds, wibpulser, make_plots):
         dqm_test_suite_daphne.do_all_tests(df_dict)
         print(dqm_test_suite_daphne.get_table())
 
-    
-
     if(make_plots):
         if(not wibpulser):
             plot_WIBEth_by_channel(df_dict,var="adc_rms",det_name=tpc_det_name,jpeg_base=f"pdune2_{tpc_det_name}_rms")
