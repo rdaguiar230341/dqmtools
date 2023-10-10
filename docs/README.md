@@ -3,7 +3,7 @@ Tools for on the spot Data Quality Monitoring. With dqmtools package it is possi
 
 ### Quickstart
 To run dqm_analyzer some external python libraries are needed, so one will need to create DBT working area with local python environment.
-```
+```bash
 # Create a  DBT work area witl local python environment
 dbt-create -c <release> <workarea>
 cd <workarea>
@@ -14,7 +14,7 @@ cd dqmtools
 pip install -r requirements.txt
 ```
 After these steps everything should be ready and one can run
-```
+```bash
 dqm_analyzer.py --help
 ```
 to list available options.
@@ -22,18 +22,18 @@ By default script will look for HD TPC data and analyze only first record in a g
 
 ### Usage examples
 The most basic usage requires only one argument -- data file and works for the HD TPC data:
-```
+```bash
 dqm_analyzer.py /data1/np04_hd_run022752_0000_dataflow0_datawriter_0_20230925T084543.hdf5.copied
 ```
 In case of VD TPC additional argument `--vd` is required:
-```
+```bash
 dqm_analyzer.py --vd /data1/np02_vd_run022748_0000_dataflow0_datawriter_0_20230925T074747.hdf5
 ```
 Adding `--pds` will initialize checks related to the DAPHNE data and print results in a separate table:
-```
+```bash
 dqm_analyzer.py --pds /data1/np04_hd_run022752_0000_dataflow0_datawriter_0_20230925T084543.hdf5.copied
 ```
 And to add plotting of some stats for the collected data:
-```
+```bash
 dqm_analyzer.py --make-plots --pds /data1/np04_hd_run022752_0000_dataflow0_datawriter_0_20230925T084543.hdf5.copied
 ```
