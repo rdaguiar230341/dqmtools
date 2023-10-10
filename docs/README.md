@@ -1,25 +1,39 @@
 # dqmtools
 Tools for on the spot Data Quality Monitoring. With dqmtools package it is possible to perform a number of basic checks for a given data file. 
-Main script:
+
+### Quickstart
+To run dqm_analyzer some external python libraries are needed, so one will need to create DBT working area with local python environment.
 ```
-scripts/dqm_analyzer.py 
+# Create a  DBT work area witl local python environment
+dbt-create -c <release> <workarea>
+cd <workarea>
+source env.sh
+
+# Clone dqmtools here
+cd dqmtools
+pip install -r requirements.txt
 ```
+After these steps everything should be ready and one can run
+```
+dqm_analyzer.py --help
+```
+to list available options.
 By default script will look for HD TPC data and analyze only first record in a given file. When finished script will print out in a table with possible check results -- INVALID,OK,WARNING,BAD. 
 
 ### Usage examples
 The most basic usage requires only one argument -- data file and works for the HD TPC data:
 ```
-./dqm_analyzer.py /data1/np04_hd_run022752_0000_dataflow0_datawriter_0_20230925T084543.hdf5.copied
+dqm_analyzer.py /data1/np04_hd_run022752_0000_dataflow0_datawriter_0_20230925T084543.hdf5.copied
 ```
 In case of VD TPC additional argument `--vd` is required:
 ```
-./dqm_analyzer.py --vd /data1/np02_vd_run022748_0000_dataflow0_datawriter_0_20230925T074747.hdf5
+dqm_analyzer.py --vd /data1/np02_vd_run022748_0000_dataflow0_datawriter_0_20230925T074747.hdf5
 ```
 Adding `--pds` will initialize checks related to the DAPHNE data and print results in a separate table:
 ```
-./dqm_analyzer.py --pds /data1/np04_hd_run022752_0000_dataflow0_datawriter_0_20230925T084543.hdf5.copied
+dqm_analyzer.py --pds /data1/np04_hd_run022752_0000_dataflow0_datawriter_0_20230925T084543.hdf5.copied
 ```
 And to add plotting of some stats for the collected data:
 ```
-./dqm_analyzer.py --make-plots --pds /data1/np04_hd_run022752_0000_dataflow0_datawriter_0_20230925T084543.hdf5.copied
+dqm_analyzer.py --make-plots --pds /data1/np04_hd_run022752_0000_dataflow0_datawriter_0_20230925T084543.hdf5.copied
 ```
