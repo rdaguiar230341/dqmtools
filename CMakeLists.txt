@@ -4,9 +4,9 @@ project(dqmtools VERSION 0.1.0)
 find_package(daq-cmake REQUIRED)
 find_package(fmt REQUIRED)
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
-find_package(daqdataformats REQUIRED)
+find_package(rawdatautils REQUIRED)
 find_package(detdataformats REQUIRED)
-find_package(fddetdataformats REQUIRED)
+find_package(hdf5libs REQUIRED)
 
 daq_setup_environment()
 
