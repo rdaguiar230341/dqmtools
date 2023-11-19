@@ -90,6 +90,34 @@ class DQMTestSuite:
     def clear_all_results(self):
         self.df_results = pd.DataFrame(columns=["name","result","message","last_update"])
 
+    def get_results_in_str(self):
+        """
+        Dash has problems with lists as entries in a dataframe, so changing to strings
+        and doing some makeup.
+        """
+        tmp_df = self.df_results
+
+        upd, msg, rslt, nam = [], [], [], []
+
+        for i in range(len(tmp_df)):
+            upd.append(tmp_df.last_update.iloc[i].strftime('%b-%d-%Y, %H:%M:%S'))
+            msg.append(str(tmp_df.iloc[i].message[0]))
+            rslt.append(str(tmp_df.iloc[i].result[0]))
+
+            if "CheckWIBEth" in tmp_df.name.iloc[i].split("_")[0]:
+                nam.append(tmp_df.name.iloc[i].replace("CheckWIBEth_", ""))
+            else:
+                nam.append(tmp_df.name.iloc[i].replace("Check", ""))
+
+        tmp_df["Name"]     = pd.Series(nam)
+        tmp_df["Result"]        = pd.Series(rslt)
+        tmp_df["Message"]       = pd.Series(msg)
+        tmp_df["Last update"]   = pd.Series(upd)
+
+        tmp_df = tmp_df.drop(['message', 'last_update', 'result', 'name'], axis=1)
+
+        return tmp_df
+
     def clear_old_results(self):
         self.df_results = self.df_results.sort_values('last_update',ascending=False).drop_duplicates(["name"])
 
