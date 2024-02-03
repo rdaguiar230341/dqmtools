@@ -29,15 +29,16 @@ import click
 @click.command()
 @click.argument('input_dir',        type=click.Path(exists=True))
 @click.argument('run')
-@click.option('--nrecords', '-nr',          default=-1,     help='Number of records to process in each file.')
-@click.option('--nfiles',   '-nf',          default=-1,     help='Number of files to process in the run.')
-@click.option('--cathode',is_flag=True,     default=False,  help='Use only cathode channels')
+@click.option('--nrecords', '-nr',          default=-1,     help='Number of records to process in each file (default: all).')
+@click.option('--nfiles',   '-nf',          default=-1,     help='Number of files to process in the run (default: all).')
+@click.option('--cathode', is_flag=True,     default=False,  help='Use only cathode channels')
 @click.option('--membrane',is_flag=True,    default=False,  help='Use only membrane channels')
 
 def main(input_dir, run, nrecords, nfiles, cathode, membrane):
     """
-        Iterate over records and unpack the data into dictionary of pandas DataFrames;
-        This part takes advantage of the code from dqmtools package.
+        For the specified RUN script will iterate over datafiles, unpack the DAPHNE streaming data,
+        create numpy arrays of the waveforms and save them to the files in current directory.
+        Each channel will be saved in a separate file.
     """
 
     allFiles    = os.listdir(input_dir)
