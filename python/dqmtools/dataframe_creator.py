@@ -29,12 +29,30 @@ except:
 #def CreateDataFrame(dict,nrows,idx_list):
 #    return pd.DataFrame(dict,index=range(nrows)).set_index(idx_list)
 
-def get_fragment_unpacker(frag_type,det_id):
+def get_fragment_unpacker(frag_type,det_id,op_env):
     
     if(frag_type==daqdataformats.FragmentType.kWIBEth and det_id==detdataformats.DetID.Subdetector.kHD_TPC.value):
-        return rawdatautils.unpack.utils.WIBEthUnpacker("PD2HDChannelMap")
+
+        map_name = ""
+        if op_env=="np04hd":
+            map_name="PD2HDChannelMap"
+        elif op_env=="np04hdcoldbox":
+            map_name="HDColdboxChannelMap"
+        elif op_env=="iceberghd":
+            map_name="ICEBERGChannelMap"
+        return rawdatautils.unpack.utils.WIBEthUnpacker(map_name)
+    
     elif(frag_type==daqdataformats.FragmentType.kWIBEth and det_id==detdataformats.DetID.Subdetector.kVD_BottomTPC.value):
-        return rawdatautils.unpack.utils.WIBEthUnpacker("PD2VDBottomTPCChannelMap")
+
+        map_name = ""
+        if op_env=="np02vd":
+            map_name="PD2HDChannelMap"
+        elif op_env=="np02vdcoldbox":
+            map_name="VDColdboxChannelMap"
+        elif op_env=="icebergvd":
+            map_name="ICEBERGChannelMap"
+        return rawdatautils.unpack.utils.WIBEthUnpacker(map_name)
+    
     elif(frag_type==daqdataformats.FragmentType.kDAPHNEStream):
         return rawdatautils.unpack.utils.DAPHNEStreamUnpacker()
     elif(frag_type==daqdataformats.FragmentType.kDAPHNE):
@@ -42,7 +60,7 @@ def get_fragment_unpacker(frag_type,det_id):
     else:
         return None
     
-def process_source_id(h5_file,sid,record_index):
+def process_source_id(h5_file,sid,record_index,op_env):
 
     sid_unpacker = rawdatautils.unpack.utils.SourceIDUnpacker(record_index)
     return_dict = sid_unpacker.get_all_data(sid)
@@ -59,7 +77,7 @@ def process_source_id(h5_file,sid,record_index):
         det_id=frag.get_detector_id()
         type_string = f'{detdataformats.DetID.Subdetector(det_id).name}_{frag_type.name}'
 
-        fragment_unpacker = get_fragment_unpacker(frag_type,det_id)
+        fragment_unpacker = get_fragment_unpacker(frag_type,det_id,op_env)
         if fragment_unpacker is None:
             print(f'Unknown fragment {type_string}. Source ID {sid}')
             return return_dict
@@ -72,9 +90,10 @@ def process_record(h5_file,rid,df_dict,MAX_WORKERS=10):
 
     with h5py.File(h5_file.get_file_name(), 'r') as f:
         record_index = RecordDataBase(run=f.attrs["run_number"],trigger=rid[0],sequence=rid[1])
+        op_env = f.attrs["operational_environment"]
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_sid = {executor.submit(process_source_id,h5_file,sid,record_index): sid for sid in h5_file.get_source_ids(rid)}
+        future_to_sid = {executor.submit(process_source_id,h5_file,sid,record_index,op_env): sid for sid in h5_file.get_source_ids(rid)}
         for future in concurrent.futures.as_completed(future_to_sid):
             sid = future_to_sid[future]
             res = future.result()
