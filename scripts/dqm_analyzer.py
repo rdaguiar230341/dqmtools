@@ -14,11 +14,12 @@ import click
 @click.option('--nrecords', '-n', default=1, help='How many Trigger Records to process (default: 1)')
 @click.option('--nworkers', default=10, help='How many thread workers to launch (default: 10)')
 @click.option('--hd/--vd', default=True, help='Whether we are running HD (or VD) (default: "HD")')
+@click.option('--warm/--cold', default=True, help='Whether we are running warm or cold (default: "warm")')
 @click.option('--pds',is_flag=True, help='If PDS was included and should be processed')
 @click.option('--wibpulser', is_flag=True, help='WIBs in pulser mode')
 @click.option('--make-plots',is_flag=True, help='Option to make plots')
 
-def main(filenames, nrecords, nworkers, hd, pds, wibpulser, make_plots):
+def main(filenames, nrecords, nworkers, hd, warm, pds, wibpulser, make_plots):
 
     #setup our tests
     dqm_test_suite = DQMTestSuite()
@@ -27,14 +28,21 @@ def main(filenames, nrecords, nworkers, hd, pds, wibpulser, make_plots):
     
     if(hd):
         tpc_det_name = "HD_TPC"
+        tpc_det_id = 3
         tpc_rms_high_threshold=100
         tpc_rms_low_threshold=[20.,15.]
-        tpc_det_id = 3
+        if not warm:
+            tpc_rms_high_threshold=50
+            tpc_rms_low_threshold=[4.,3.]
+            
     else:
         tpc_det_name = "VD_BottomTPC"
+        tpc_det_id = 10
         tpc_rms_high_threshold=100
         tpc_rms_low_threshold=[12.,20.]        
-        tpc_det_id = 10
+        if not warm:
+            tpc_rms_high_threshold=50
+            tpc_rms_low_threshold=[2.,3.]
 
     dqm_test_suite.register_test(CheckTimestampDiffs_WIBEth(tpc_det_name))
 
