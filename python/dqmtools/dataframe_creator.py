@@ -38,7 +38,7 @@ def get_fragment_unpacker(frag_type,det_id,op_env):
             map_name="PD2HDChannelMap"
         elif op_env=="np04hdcoldbox":
             map_name="HDColdboxChannelMap"
-        elif op_env=="iceberghd":
+        elif op_env=="iceberghd" or op_env=="iceberg":
             map_name="ICEBERGChannelMap"
         return rawdatautils.unpack.utils.WIBEthUnpacker(map_name)
     
