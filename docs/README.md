@@ -5,7 +5,7 @@ Tools for on the spot Data Quality Monitoring. With dqmtools package it is possi
 To run dqm_analyzer some external python libraries are needed, so one will need to create DBT working area with local python environment.
 ```bash
 # Create a  DBT work area witl local python environment
-dbt-create -c <release> <workarea>
+dbt-create <release> <workarea>
 cd <workarea>
 source env.sh
 
