@@ -7,6 +7,8 @@ import hdf5libs
 
 import os
 
+import pandas as pd
+
 import click
 @click.command()
 @click.argument('input_filenames', nargs=-1, type=click.Path(exists=True))
@@ -61,7 +63,7 @@ def main(input_filenames, output_filename, force, append, nrecords, nworkers, co
     print(df_dict.keys())
 
     for key, df in df_dict.items():
-        df.to_hdf(output_filename,key,complevel=complevel,complib=complib)
+        df.to_hdf(output_filename,key=key,complevel=complevel,complib=complib)
     
 
 if __name__ == '__main__':
