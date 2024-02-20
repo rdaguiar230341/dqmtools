@@ -203,7 +203,7 @@ class CheckTimestampsAligned(DQMTest):
 
                 df_tmp["timestamp_diff"] = df_tmp["timestamp_first_dts"]-df_tmp["timestamp_first_dts_majority"]
                 n_different = len(np.unique(df_tmp.reset_index()["src_id"].apply(lambda x: int(x))))
-                print("\nFRAGMENTS FAILING TIMESTAMP ALIGNMENT")
+                print(f"\nFRAGMENTS FAILING TIMESTAMP ALIGNMENT for Detector ID {self.det_id}")
                 print(tabulate(df_tmp.reset_index()[["trigger","sequence","crate_id","slot_id","stream_id","timestamp_first_dts","timestamp_first_dts_majority","timestamp_diff"]],
                                 headers=["Record","Seq.","Crate","Slot","Stream","Timestamp (first)","Majority timestamp","Difference"],
                                 showindex=False,tablefmt='pretty'))
@@ -269,6 +269,7 @@ class CheckRMS_WIBEth(DQMTest):
         else:
             if self.verbose:
                 print("CHANNELS FAILING RMS CHECK")
+                print(f"operator {str(self.operator)} ({self.operator.__doc__})")
                 df_tmp = df_tmp.merge(df_dict[self.det_data_key].reset_index()[["channel","apa","plane"]].drop_duplicates(["channel"]),on=["channel"])
                 print(tabulate(df_tmp.reset_index()[["channel","adc_rms","apa","plane","threshold"]],
                                headers=["Channel","RMS","APA/CRP","Plane","Threshold"],
