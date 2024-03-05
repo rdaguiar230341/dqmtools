@@ -62,7 +62,7 @@ def main(filenames, nrecords, nworkers, hd, warm, pds, wibpulser, make_plots):
     dqm_test_suite_wibs.register_test(CheckWIBEth_FEMB_Sync(tpc_det_name))
 
     dqm_test_suite_wibs.register_test(CheckTimestampsAligned(tpc_det_id),f"CheckTimestampsAligned_{tpc_det_name}")
-    dqm_test_suite_wibs.register_test(CheckRequestTimes_WibEth(tpc_det_name))
+    dqm_test_suite_wibs.register_test(CheckRequestTimes_WIBEth(tpc_det_name))
 
     if(not wibpulser):
         dqm_test_suite_wibs.register_test(CheckRMS_WIBEth(det_name=tpc_det_name,threshold=tpc_rms_high_threshold,verbose=True),
