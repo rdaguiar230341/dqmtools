@@ -1,4 +1,5 @@
 from dqmtools.dqmtools import *
+from rawdatautils.unpack.dataclasses import *
 
 import numpy as np
 import operator
@@ -185,7 +186,7 @@ class CheckTimestampsAligned(DQMTest):
     
     def run_test(self,df_dict):
         df_tmp = df_dict["daqh"].loc[df_dict["daqh"]["det_id"]==self.det_id]
-
+        
         if len(df_tmp)==0:
             return DQMTestResult(DQMResultEnum.WARNING,f'WARNING: No components found with detector id {self.det_id}.')
         
@@ -197,15 +198,19 @@ class CheckTimestampsAligned(DQMTest):
             return DQMTestResult(DQMResultEnum.OK,f'OK')
         else:
             if self.verbose:
+                df_tmp_fr = df_dict["frh"].loc[df_dict["frh"]["det_id"]==self.det_id][["trigger_timestamp_dts","window_begin_dts","window_end_dts"]]
+                
                 df_tmp_gb_mode = df_tmp_gb.apply(lambda x: x[0][np.argmax(x[1])])
                 df_tmp = df_tmp.join(df_tmp_gb_mode,rsuffix='_majority')
+                df_tmp = df_tmp.join(df_tmp_fr)
                 df_tmp = df_tmp.loc[(df_tmp["timestamp_first_dts"]!=df_tmp["timestamp_first_dts_majority"])]
 
                 df_tmp["timestamp_diff"] = df_tmp["timestamp_first_dts"]-df_tmp["timestamp_first_dts_majority"]
                 n_different = len(np.unique(df_tmp.reset_index()["src_id"].apply(lambda x: int(x))))
                 print(f"\nFRAGMENTS FAILING TIMESTAMP ALIGNMENT for Detector ID {self.det_id}")
-                print(tabulate(df_tmp.reset_index()[["trigger","sequence","crate_id","slot_id","stream_id","timestamp_first_dts","timestamp_first_dts_majority","timestamp_diff"]],
-                                headers=["Record","Seq.","Crate","Slot","Stream","Timestamp (first)","Majority timestamp","Difference"],
+                print(tabulate(df_tmp.reset_index()[["trigger","sequence","crate_id","slot_id","stream_id","timestamp_first_dts","timestamp_first_dts_majority","timestamp_diff",
+                                                     "window_begin_dts","window_end_dts"]],
+                                headers=["Record","Seq.","Crate","Slot","Stream","Timestamp (first)","Majority timestamp","Difference","Window begin","Window end"],
                                 showindex=False,tablefmt='pretty'))
 
             return DQMTestResult(DQMResultEnum.BAD,
@@ -230,6 +235,41 @@ class CheckNFrames_WIBEth(DQMTest):
             return DQMTestResult(DQMResultEnum.BAD,
                                  f'{n_frames_wrong} / {len(df_tmp)} WIBEth fragments have the wrong number of frames.')
 
+class CheckRequestTimes_WibEth(DQMTest):
+
+    def __init__(self,det_name,verbose=True):
+        super().__init__()
+        self.name = f'CheckRequestTimes_WIBEth'
+        self.deth_name=f'deth_k{det_name}_kWIBEth'
+        self.verbose = verbose
+
+    def run_test(self,df_dict):
+        df_tmp = df_dict["frh"].loc[df_dict["frh"]["fragment_type"]==12][["window_begin_dts","window_end_dts"]]
+        if len(df_tmp)==0:
+            return DQMTestResult(DQMResultEnum.WARNING,f'WARNING: No components with detid {self.det_id} found.')
+        df_tmp = df_tmp.join(df_dict[self.deth_name][["timestamp_dts_diff_vals","timestamp_dts_diff_idx","timestamp_dts_first","n_frames"]])
+        print(df_tmp.iloc[0]["timestamp_dts_first"],df_tmp.iloc[0]["timestamp_dts_diff_vals"],df_tmp.iloc[0]["timestamp_dts_diff_idx"])
+        df_tmp["timestamp_dts_last"] = df_tmp.apply(lambda x: desparsify_array_diff_of_diff_locs_and_vals(x.timestamp_dts_first,x.timestamp_dts_diff_idx,x.timestamp_dts_diff_vals,x.n_frames*64)[-1],axis=1)
+
+        df_bad = df_tmp.loc[(df_tmp["timestamp_dts_first"]>df_tmp["window_begin_dts"])|(df_tmp["timestamp_dts_last"]<df_tmp["window_end_dts"])]
+        n_bad = len(df_bad)
+        
+        if n_bad==0:
+            return DQMTestResult(DQMResultEnum.OK,f'OK')
+        else:
+            if self.verbose:
+                df_bad = df_bad.join(df_dict["daqh"])
+                print(f"\nFRAGMENTS FAILING WIBETH WINDOW ALIGNMENT CHECK")
+                print(tabulate(df_bad.reset_index()[["trigger","sequence","crate_id","slot_id","stream_id",
+                                                     "timestamp_dts_first","timestamp_dts_last",
+                                                     "window_begin_dts","window_end_dts"]].astype('int64'),
+                                headers=["Record","Seq.","Crate","Slot","Stream",
+                                         "Timestamp (first)","Timestamp (last)",
+                                         "Window begin","Window end"],
+                                showindex=False,tablefmt='pretty'))
+
+            return DQMTestResult(DQMResultEnum.BAD,
+                                 f'{n_bad} / {len(df_tmp)} WIBEth fragments have misaligned request windows.')
 
 class CheckRMS_WIBEth(DQMTest):
 
