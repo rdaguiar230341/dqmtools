@@ -29,8 +29,8 @@ except:
 #def CreateDataFrame(dict,nrows,idx_list):
 #    return pd.DataFrame(dict,index=range(nrows)).set_index(idx_list)
 
-def get_fragment_unpacker(frag_type,det_id,op_env):
-    
+def get_fragment_unpacker(frag_type, det_id, op_env, ana_data_prescale, wvfm_data_prescale):
+
     if(frag_type==daqdataformats.FragmentType.kWIBEth and det_id==detdataformats.DetID.Subdetector.kHD_TPC.value):
 
         map_name = ""
@@ -40,7 +40,9 @@ def get_fragment_unpacker(frag_type,det_id,op_env):
             map_name="HDColdboxChannelMap"
         elif op_env=="iceberghd" or op_env=="iceberg":
             map_name="ICEBERGChannelMap"
-        return rawdatautils.unpack.utils.WIBEthUnpacker(map_name)
+        return rawdatautils.unpack.utils.WIBEthUnpacker(map_name,
+                                                        ana_data_prescale=ana_data_prescale,
+                                                        wvfm_data_prescale=wvfm_data_prescale)
     
     elif(frag_type==daqdataformats.FragmentType.kWIBEth and det_id==detdataformats.DetID.Subdetector.kVD_BottomTPC.value):
 
@@ -51,16 +53,20 @@ def get_fragment_unpacker(frag_type,det_id,op_env):
             map_name="VDColdboxChannelMap"
         elif op_env=="icebergvd":
             map_name="ICEBERGChannelMap"
-        return rawdatautils.unpack.utils.WIBEthUnpacker(map_name)
+        return rawdatautils.unpack.utils.WIBEthUnpacker(map_name,
+                                                        ana_data_prescale=ana_data_prescale,
+                                                        wvfm_data_prescale=wvfm_data_prescale)
     
     elif(frag_type==daqdataformats.FragmentType.kDAPHNEStream):
-        return rawdatautils.unpack.utils.DAPHNEStreamUnpacker()
+        return rawdatautils.unpack.utils.DAPHNEStreamUnpacker(ana_data_prescale=ana_data_prescale,
+                                                              wvfm_data_prescale=wvfm_data_prescale)
     elif(frag_type==daqdataformats.FragmentType.kDAPHNE):
-        return rawdatautils.unpack.utils.DAPHNEUnpacker()
+        return rawdatautils.unpack.utils.DAPHNEUnpacker(ana_data_prescale=ana_data_prescale,
+                                                        wvfm_data_prescale=wvfm_data_prescale)
     else:
         return None
     
-def process_source_id(h5_file,sid,record_index,op_env):
+def process_source_id(h5_file, sid, record_index, op_env, ana_data_prescale, wvfm_data_prescale):
 
     sid_unpacker = rawdatautils.unpack.utils.SourceIDUnpacker(record_index)
     return_dict = sid_unpacker.get_all_data(sid)
@@ -71,13 +77,13 @@ def process_source_id(h5_file,sid,record_index,op_env):
         return (return_dict | rawdatautils.unpack.utils.TriggerRecordHeaderUnpacker().get_all_data((trh,n_frags)) )
 
     if(sid.subsystem==daqdataformats.SourceID.Subsystem.kDetectorReadout):
-        frag = h5_file.get_frag((record_index.trigger,record_index.sequence),sid)
+        frag = h5_file.get_frag((record_index.trigger, record_index.sequence), sid)
 
         frag_type=frag.get_fragment_type()
         det_id=frag.get_detector_id()
         type_string = f'{detdataformats.DetID.Subdetector(det_id).name}_{frag_type.name}'
 
-        fragment_unpacker = get_fragment_unpacker(frag_type,det_id,op_env)
+        fragment_unpacker = get_fragment_unpacker(frag_type, det_id, op_env, ana_data_prescale, wvfm_data_prescale)
         if fragment_unpacker is None:
             print(f'Unknown fragment {type_string}. Source ID {sid}')
             return return_dict
@@ -86,14 +92,20 @@ def process_source_id(h5_file,sid,record_index,op_env):
         
     return return_dict
 
-def process_record(h5_file,rid,df_dict,MAX_WORKERS=10):
+def process_record(h5_file,rid,df_dict,MAX_WORKERS=10,ana_data_prescale=1,wvfm_data_prescale=None):
 
     with h5py.File(h5_file.get_file_name(), 'r') as f:
         record_index = RecordDataBase(run=f.attrs["run_number"],trigger=rid[0],sequence=rid[1])
         op_env = f.attrs["operational_environment"]
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_sid = {executor.submit(process_source_id,h5_file,sid,record_index,op_env): sid for sid in h5_file.get_source_ids(rid)}
+        future_to_sid = {executor.submit(process_source_id,
+                                         h5_file,
+                                         sid,
+                                         record_index,
+                                         op_env,
+                                         ana_data_prescale,
+                                         wvfm_data_prescale): sid for sid in h5_file.get_source_ids(rid) }
         for future in concurrent.futures.as_completed(future_to_sid):
             sid = future_to_sid[future]
             res = future.result()
