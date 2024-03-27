@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 
-import os
 import pandas as pd
 
 import click
+
+
 @click.command()
 @click.argument('input_filenames', nargs=-1, type=click.Path(exists=True))
-
 def main(input_filenames):
-
     df_dict = {}
-    n_processed_records = 0
+
     for filename in input_filenames:
         print(f'Processing file {filename}.')
 
@@ -18,10 +17,11 @@ def main(input_filenames):
 
             # Loop through each key
             for key in store.keys():
-                mykey = key[1:] #remove front '/'
-                if mykey not in df_dict: df_dict[mykey] = []
-                df_dict[mykey].append(store[key])
-                
+                my_key = key[1:]  # remove front '/'
+                if my_key not in df_dict:
+                    df_dict[my_key] = []
+                df_dict[my_key].append(store[key])
+
     for key in df_dict.keys():
         df_dict[key] = pd.concat(df_dict[key])
 
@@ -31,7 +31,7 @@ def main(input_filenames):
         print(f'\t\tTotal entries: {len(df)}')
         print(f'\t\tDataframe indices: {df.index.names}')
         print(f'\t\tDataframe columns: {df.columns.to_list()}')
-    
+
 
 if __name__ == '__main__':
     main()
