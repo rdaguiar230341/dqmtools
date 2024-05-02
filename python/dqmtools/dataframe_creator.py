@@ -121,9 +121,14 @@ def select_record(df,run=None,trigger=None,sequence=None):
         index = df.index[0][0:3]
     else:
         qstr=''
-        if run is not None: qstr = qstr+f'run=={run}'
-        if trigger is not None: qstr = qstr+f'trigger=={trigger}'
-        if sequence is not None: qstr = qstr+f'sequence=={sequence}'
+        if run is not None:
+            qstr = qstr+f'run=={run}'
+        if trigger is not None:
+            if len(qstr)!=0: qstr = qstr+" and "
+            qstr = qstr+f'trigger=={trigger}'
+        if sequence is not None:
+            if len(qstr)!=0: qstr = qstr+" and "
+            qstr = qstr+f'sequence=={sequence}'
         index = df.query(qstr).index[0][0:3]
     
     try:
