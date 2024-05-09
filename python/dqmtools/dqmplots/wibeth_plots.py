@@ -82,10 +82,10 @@ def plot_WIBEth_pulser_by_channel(df_dict,det_name,run=None,trigger=None,seq=Non
         fig.write_image(f"{jpeg_base}_run{index.run}_trigger{index.trigger}_seq{index.sequence}.jpeg")
     return fig
 
-def plot_adc_map(df_dict,tpc_det_key,apa,plane,
-                 offset=True,
-                 orientation="vertical",colorscale='plasma',color_range=(-256,256),
-                 run=None,trigger=None,seq=None):
+def plot_WIBEth_adc_map(df_dict,tpc_det_key,apa,plane,
+                        offset=True,
+                        orientation="vertical",colorscale='plasma',color_range=(-256,256),
+                        run=None,trigger=None,seq=None):
 
     if tpc_det_key not in df_dict.keys():
         print(f"Can not make plots for {tpc_det_key}, no DATA found")
@@ -104,23 +104,30 @@ def plot_adc_map(df_dict,tpc_det_key,apa,plane,
     df_tmp["timestamps_trg_sub"] = df_tmp.apply(lambda x: x.timestamps.astype(np.int64) - x.trigger_timestamp_dts,axis=1)
     if offset:
         df_tmp["adcs"] = df_tmp["adcs"]-df_tmp["adc_mean"]
-
-    df_tmp.sort_values("channel")
-    print(df_tmp["channel"],df_tmp.iloc[0]["timestamps_trg_sub"])
-
+    df_tmp = df_tmp.sort_values("channel")
 
     if orientation=="horizontal":
         xdata = df_tmp.iloc[0]["timestamps_trg_sub"]
-        ydata = df_tmp["channel"]
-        zdata = df_tmp["adcs"].T
+        ydata = df_tmp["channel"].values
+        zdata = np.vstack(df_tmp["adcs"].values)
+        yaxis_title='Offline Channel'
+        xaxis_title='DTS time ticks (16ns)'
     else:
         ydata = df_tmp.iloc[0]["timestamps_trg_sub"]
-        xdata = df_tmp["channel"]
-        zdata = df_tmp["adcs"]
+        xdata = df_tmp["channel"].values
+        zdata = np.vstack(df_tmp["adcs"].values).T
+        xaxis_title='Offline Channel'
+        yaxis_title='DTS time ticks (16ns)'
 
-    print(xdata,ydata,zdata)
+    fig=px.imshow(zdata,
+                  aspect="auto", origin='lower',
+                  x=list(xdata),y=list(ydata),
+                  color_continuous_scale=colorscale,
+                  zmin=color_range[0],zmax=color_range[1])
 
-    fig = go.Figure(data=go.Heatmap(z=df_tmp["adcs"], x=df_tmp["channel"], y=df_tmp.iloc[0]["timestamps_trg_sub"],
-                                    zmin=color_range[0], zmax=color_range[1], colorscale=colorscale))
+    fig.update_layout(
+        yaxis_title=yaxis_title,
+        xaxis_title=xaxis_title,
+    )
 
     return fig
