@@ -21,10 +21,12 @@ except ModuleNotFoundError as err:
 except:
     raise
 
-from .plot_utils import get_CERN_timestamp
+from .plot_utils import *
 
 def plot_WIBEth_by_channel(df_dict,var,det_name,run=None,trigger=None,seq=None,yrange=None,jpeg_base=None):
-    
+
+    rename_PD2HD_APAs(df_dict)
+
     if f"detd_k{det_name}_kWIBEth" not in df_dict.keys():
         print(f"Can not make plots for detd_k{det_name}_kWIBEth, no DATA found")
         return
@@ -46,6 +48,8 @@ def plot_WIBEth_by_channel(df_dict,var,det_name,run=None,trigger=None,seq=None,y
 
 def plot_WIBETH_by_channel_DQM(df_dict,var,tpc_det_key,run=None,trigger=None,seq=None):
 
+    rename_PD2HD_APAs(df_dict)
+
     if tpc_det_key not in df_dict.keys():
         print(f"Can not make plots for {tpc_det_key}, no DATA found")
         return None
@@ -62,7 +66,9 @@ def plot_WIBETH_by_channel_DQM(df_dict,var,tpc_det_key,run=None,trigger=None,seq
 
 
 def plot_WIBEth_pulser_by_channel(df_dict,det_name,run=None,trigger=None,seq=None,jpeg_base=None):
-    
+
+    rename_PD2HD_APAs(df_dict)
+
     if f"detd_k{det_name}_kWIBEth" not in df_dict.keys():
         print(f"Can not make plots for detd_k{det_name}_kWIBEth, no DATA found")
         return
@@ -86,6 +92,8 @@ def plot_WIBEth_adc_map(df_dict,tpc_det_key,apa,plane,
                         offset=True,
                         orientation="vertical",colorscale='plasma',color_range=(-256,256),
                         run=None,trigger=None,seq=None):
+
+    rename_PD2HD_APAs(df_dict)
 
     if tpc_det_key not in df_dict.keys():
         print(f"Can not make plots for {tpc_det_key}, no DATA found")
@@ -129,5 +137,46 @@ def plot_WIBEth_adc_map(df_dict,tpc_det_key,apa,plane,
         yaxis_title=yaxis_title,
         xaxis_title=xaxis_title,
     )
+
+    return fig
+
+def plot_WIBEth_waveform(df_dict,tpc_det_key,channel,
+                         offset=False,overlay_tps=False,
+                         run=None,trigger=None,seq=None):
+
+    rename_PD2HD_APAs(df_dict)
+
+    if tpc_det_key not in df_dict.keys():
+        print(f"Can not make plots for {tpc_det_key}, no DATA found")
+        return None
+    tpc_wvfm_key = "detw"+tpc_det_key[4:]
+    df_tmp = df_dict[tpc_wvfm_key]
+    idx_names = df_tmp.index.names
+    df_tmp = df_tmp.reset_index()
+    df_tmp = df_tmp.loc[df_tmp["channel"]==channel]
+    df_tmp = df_tmp.set_index(idx_names)
+
+    df_tmp = df_tmp.merge(df_dict["frh"]["trigger_timestamp_dts"],left_index=True,right_index=True)
+    if offset:
+        df_tmp = df_tmp.merge(df_dict[tpc_det_key]["adc_mean"],left_index=True,right_index=True)
+
+    df_tmp, index = dfc.select_record(df_tmp,run,trigger,seq)
+    df_tmp = df_tmp.reset_index()
+
+    df_tmp["timestamps_trg_sub"] = df_tmp.apply(lambda x: x.timestamps.astype(np.int64) - x.trigger_timestamp_dts,axis=1)
+    yaxis_title = "ADC counts"
+    if offset:
+        df_tmp["adcs"] = df_tmp["adcs"]-df_tmp["adc_mean"]
+        yaxis_title = yaxis_title + " (pedestal subtracted)"
+
+    print(df_tmp)
+    print(df_tmp["timestamps"].values[0])
+    print(df_tmp["adcs"].values[0])
+    fig = go.Figure(data=go.Scatter(x=df_tmp["timestamps_trg_sub"].values[0], y=df_tmp["adcs"].values[0]))
+
+
+    fig.update_layout(xaxis_title='DTS Timestmap (16ns) relative to trigger',
+                      yaxis_title=yaxis_title,
+                      title=f"Waveform for channel {channel}")
 
     return fig
